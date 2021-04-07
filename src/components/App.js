@@ -7,6 +7,7 @@ import Web3 from 'web3';
 import './App.css';
 import {BrowserRouter as Router,Route} from 'react-router-dom'
 import Doctor from './Doctor'
+import XLSX from 'xlsx'
 
 
 
@@ -43,12 +44,12 @@ class App extends Component {
     const networkId = await web3.eth.net.getId()
     const networkData = Decentragram.networks[networkId]
 
-    // if(accounts[0]=="0x89fae8e8a7e50Dc5abcebF9f6e26635061CefAC4"){
-    //   console.log("accounts",this.state.account)
-    // }
-    // else{
-    //   console.log("Phewww")
-    // }
+    if(accounts[0]=="0x566D4d760194EC916098cbF2acd77e6699EBBFd0"){
+      console.log("accounts",this.state.account)
+    }
+    else{
+      console.log("Phewww")
+    }
 
     if(networkData) {
       const decentragram = new web3.eth.Contract(Decentragram.abi, networkData.address)
@@ -72,18 +73,68 @@ class App extends Component {
     }
   }
 
-  captureFile = event => {
+captureFile = event => {
 
     event.preventDefault()
-    const file = event.target.files[0]
-    const reader = new window.FileReader()
-    reader.readAsArrayBuffer(file)
 
-    reader.onloadend = () => {
-      this.setState({ buffer: Buffer(reader.result) })
+    const file=event.target.files[0]
+    const reader1 = new window.FileReader()
+    reader1.readAsArrayBuffer(file)
+
+    reader1.onloadend = () => {
+      this.setState({ buffer: Buffer(reader1.result) })
       console.log('buffer', this.state.buffer)
     }
+
+
+    const reader2 = new FileReader()
+    reader2.onload=event=>{
+
+      const bstr=event.target.result
+      const workBook= XLSX.read(bstr,{type:'binary'})
+
+      const workSheetName = workBook.SheetNames[0]
+      const workSheet = workBook.Sheets[workSheetName]
+
+      const fileData = XLSX.utils.sheet_to_json(workSheet,{header:1})
+      // this.setState({filee:fileData})
+      const headers = fileData[0]
+      const heads = headers.map(head=>({title:head,field:head}))
+      console.log(heads)
+      this.setState({colDefs:heads})
+      console.log('helll',this.state.colDefs)
+      fileData.splice(0,1)
+      // console.log(fileData[0][1])
+      const arrayColumn=(arr,n)=>arr.map(x=>x[n]);
+      const test=arrayColumn(fileData,0)
+      console.log(typeof test[1],test[0])
+
+      // console.log(Math.max(...test));
+      test.sort();
+      console.log( test)
+      const maxVal=test[test.length-1]
+      const minVal=test[1]
+      console.log("max value",maxVal)
+      console.log("min value",minVal) 
+
+      this.setState({ maxVal: maxVal})
+      this.setState({ minVal: minVal})
+
+      const map = test.reduce((acc, e) => acc.set(e, (acc.get(e) || 0) + 1), new Map());
+      const countMax  =Math.max(...map.values())
+      console.log("count",countMax)
+      const countMin=Math.min(...map.values())
+
+      this.setState({ maxCount: countMax })
+      this.setState({ minCount: countMin})
+
+      console.log("count",countMin)
+    }
+    reader2.readAsBinaryString(file)
+    
   }
+
+
 
   uploadImage = description => {
     console.log("Submitting file to ipfs...")
@@ -97,7 +148,8 @@ class App extends Component {
       }
 
       this.setState({ loading: true })
-      this.state.decentragram.methods.uploadImage(result[0].hash, description,Date().toLocaleString()).send({ from: this.state.account }).on('transactionHash', (hash) => {
+      this.state.decentragram.methods.uploadImage(result[0].hash,description,this.state.maxVal,this.state.minVal,Date().toLocaleString()).send({ from: this.state.account }).on('transactionHash', (hash) => {
+      // this.state.decentragram.methods.uploadData(this.state.maxVal,this.state.minVal,this.state.maxCount,this.state.minCount)
         this.setState({ loading: false })
       })
     })
@@ -110,12 +162,18 @@ class App extends Component {
     })
   }
 
+// this.state.maxVal,this.state.minVal,this.state.maxCount,this.state.minCount,
   constructor(props) {
     super(props)
     this.state = {
       account: '',
       decentragram: null,
+      maxVal:0,
+      minVal:0,
+      maxCount:null,
+      minCount:null,
       images: [],
+      // data:[],
       loading: true
       
     }
@@ -126,6 +184,7 @@ class App extends Component {
   }
 
   render() {
+    console.log(this.state.maxVal)
     return (
       <div>
       <Navbar account={this.state.account}/>      
