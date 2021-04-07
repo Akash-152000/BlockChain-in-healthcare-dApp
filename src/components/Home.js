@@ -1,9 +1,9 @@
 import React, { Component }from 'react';
 import './App.js'
 import './App.css'
-import Navbar from './Navbar'
-import Web3 from 'web3';
-import {Link} from 'react-router-dom';
+// import Navbar from './Navbar'
+// import Web3 from 'web3';
+// import {Link} from 'react-router-dom';
 import "bootstrap/dist/css/bootstrap.min.css";
 import ca from '../components/img/ca.jpg'
 import cb from '../components/img/cb.jpg'
