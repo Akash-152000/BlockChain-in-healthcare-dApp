@@ -4,6 +4,8 @@ import Navbar from './Navbar'
 import Main from './Main'
 import Home from './Home'
 import Web3 from 'web3';
+import Upload from './Upload'
+import Patient from './Patient'
 import './App.css';
 import {BrowserRouter as Router,Route} from 'react-router-dom'
 import Doctor from './Doctor'
@@ -11,7 +13,6 @@ import XLSX from 'xlsx'
 
 
 
-//Declare IPFS
 const ipfsClient = require('ipfs-http-client')
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) // leaving out the arguments will default to these values
 
@@ -73,67 +74,18 @@ class App extends Component {
     }
   }
 
-captureFile = event => {
-
+  captureFile = (event)=>{ 
     event.preventDefault()
+    //process the file in IPFS
+    const file =  event.target.files[0]
+    const reader  = new window.FileReader()
+    reader.readAsArrayBuffer(file)
+    reader.onloadend = () =>{
+      this.setState({buffer: Buffer(reader.result)
 
-    const file=event.target.files[0]
-    const reader1 = new window.FileReader()
-    reader1.readAsArrayBuffer(file)
-
-    reader1.onloadend = () => {
-      this.setState({ buffer: Buffer(reader1.result) })
-      console.log('buffer', this.state.buffer)
-    }
-
-
-    const reader2 = new FileReader()
-    reader2.onload=event=>{
-
-      const bstr=event.target.result
-      const workBook= XLSX.read(bstr,{type:'binary'})
-
-      const workSheetName = workBook.SheetNames[0]
-      const workSheet = workBook.Sheets[workSheetName]
-
-      const fileData = XLSX.utils.sheet_to_json(workSheet,{header:1})
-      // this.setState({filee:fileData})
-      const headers = fileData[0]
-      const heads = headers.map(head=>({title:head,field:head}))
-      console.log(heads)
-      this.setState({colDefs:heads})
-      console.log('helll',this.state.colDefs)
-      fileData.splice(0,1)
-      // console.log(fileData[0][1])
-      const arrayColumn=(arr,n)=>arr.map(x=>x[n]);
-      const test=arrayColumn(fileData,0)
-      console.log(typeof test[1],test[0])
-
-      // console.log(Math.max(...test));
-      test.sort();
-      console.log( test)
-      const maxVal=test[test.length-1]
-      const minVal=test[1]
-      console.log("max value",maxVal)
-      console.log("min value",minVal) 
-
-      this.setState({ maxVal: maxVal})
-      this.setState({ minVal: minVal})
-
-      const map = test.reduce((acc, e) => acc.set(e, (acc.get(e) || 0) + 1), new Map());
-      const countMax  =Math.max(...map.values())
-      console.log("count",countMax)
-      const countMin=Math.min(...map.values())
-
-      this.setState({ maxCount: countMax })
-      this.setState({ minCount: countMin})
-
-      console.log("count",countMin)
-    }
-    reader2.readAsBinaryString(file)
-    
+      })
+    } 
   }
-
 
 
   uploadImage = description => {
@@ -148,19 +100,12 @@ captureFile = event => {
       }
 
       this.setState({ loading: true })
-      this.state.decentragram.methods.uploadImage(result[0].hash,description,this.state.maxVal,this.state.minVal,Date().toLocaleString()).send({ from: this.state.account }).on('transactionHash', (hash) => {
-      // this.state.decentragram.methods.uploadData(this.state.maxVal,this.state.minVal,this.state.maxCount,this.state.minCount)
+      this.state.decentragram.methods.uploadImage(result[0].hash,description).send({ from: this.state.account }).on('transactionHash', (hash) => {
         this.setState({ loading: false })
       })
     })
   }
 
-  tipImageOwner(id, tipAmount) {
-    this.setState({ loading: true })
-    this.state.decentragram.methods.tipImageOwner(id).send({ from: this.state.account, value: tipAmount }).on('transactionHash', (hash) => {
-      this.setState({ loading: false })
-    })
-  }
 
 // this.state.maxVal,this.state.minVal,this.state.maxCount,this.state.minCount,
   constructor(props) {
@@ -168,10 +113,6 @@ captureFile = event => {
     this.state = {
       account: '',
       decentragram: null,
-      maxVal:0,
-      minVal:0,
-      maxCount:null,
-      minCount:null,
       images: [],
       // data:[],
       loading: true
@@ -179,7 +120,6 @@ captureFile = event => {
     }
 
     this.uploadImage = this.uploadImage.bind(this)
-    this.tipImageOwner = this.tipImageOwner.bind(this)
     this.captureFile = this.captureFile.bind(this)
   }
 
@@ -194,8 +134,16 @@ captureFile = event => {
               <Home/>
             </>
           )} />
-          <Route path='/Main'>
-                <Main
+
+          <Route path='/Patient'><Patient
+                account={this.state.account}
+                images={this.state.images}
+                captureFile={this.captureFile}
+                uploadImage={this.uploadImage}
+                tipImageOwner={this.tipImageOwner} /></Route>
+
+          <Route path='/Upload'>
+                <Upload
                 account={this.state.account} 
                 images={this.state.images}
                 captureFile={this.captureFile}
