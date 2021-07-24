@@ -1,4 +1,4 @@
-## ```"Decentralized Photo Social Media."```
+## ```"Decentralized Remote patient monitoring system."```
 
 ![Video URL](https://emojipedia-us.s3.amazonaws.com/content/2020/04/05/yt.png)
 
